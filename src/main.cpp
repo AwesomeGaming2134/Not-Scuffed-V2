@@ -39,7 +39,7 @@ Drive chassis(
     // Right Chassis Ports (negative port will reverse it!)
     //   the first port is the sensored port (when trackers are not used!)
     ,
-    {6, 5, 8}
+    {9, 6, 10}
 
     // IMU Port (gyro)
     ,

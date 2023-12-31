@@ -40,7 +40,7 @@ void default_constants() {
   chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 5, 0); // tune
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0); // tune
   chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15); // tune
-  chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0); // leave alone
+  chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0); // tune
 }
 
 void one_mogo_constants() { // leave alone
