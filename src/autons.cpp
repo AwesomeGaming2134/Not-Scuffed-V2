@@ -21,14 +21,14 @@ const int SWING_SPEED = 90;
 ///
 
 // flywheel Motor
-pros::Motor Fly(2, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor autonFly(2, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
 
 // intake motors
-pros::Motor IntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor IntakeLeft(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor autonIntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor autonIntakeLeft(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
 
 // Expansion
-pros::ADIDigitalOut walls('H');
+pros::ADIDigitalOut autonWalls('H');
 
 // It's best practice to tune constants when the robot is empty and with heavier game objects, or with lifts up vs down.
 // If the objects are light or the cog doesn't change much, then there isn't a concern here.
@@ -69,9 +69,6 @@ void modified_exit_condition() {// leave alone
   chassis.set_exit_condition(chassis.swing_exit, 100, 3, 500, 7, 500, 500);
   chassis.set_exit_condition(chassis.drive_exit, 80, 50, 300, 150, 500, 500);
 }
-
-
-
 
 ///
 // Drive Example
@@ -254,7 +251,23 @@ void interfered_example() {
 // . . .
 
 void DefensiveSideAuton(){
+  chassis.set_drive_pid(32.53, DRIVE_SPEED);
+  chassis.wait_drive();
 
+  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(32.53, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(-32.53, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(-32.53, DRIVE_SPEED);
+  chassis.wait_drive();
 }
 
 void OffensiveSideAuton(){
@@ -264,29 +277,29 @@ void OffensiveSideAuton(){
   chassis.set_turn_pid(-45, TURN_SPEED);
   chassis.wait_drive();
 
-  IntakeLeft = 127;
-  IntakeRight = 127;
+  autonIntakeLeft = 127;
+  autonIntakeRight = 127;
   chassis.set_drive_pid(44.82, DRIVE_SPEED);
   chassis.wait_drive();
 
   chassis.set_turn_pid(90, TURN_SPEED);
   chassis.wait_drive();
 
-  walls.set_value(true);
-  IntakeLeft = 0;
-  IntakeRight = 0;
+  autonWalls.set_value(true);
+  autonIntakeLeft = 0;
+  autonIntakeRight = 0;
   chassis.set_drive_pid(44.27, DRIVE_SPEED);
   chassis.wait_drive();
 
   chassis.set_drive_pid(-12.49, DRIVE_SPEED);
   chassis.wait_drive();
 
-  walls.set_value(false);
+  autonWalls.set_value(false);
   chassis.set_turn_pid(244, TURN_SPEED);
   chassis.wait_drive();
 
-  IntakeLeft = 127;
-  IntakeRight = 127;
+  autonIntakeLeft = 127;
+  autonIntakeRight = 127;
   chassis.set_drive_pid(39.42, DRIVE_SPEED);
   chassis.wait_drive();
 
@@ -296,8 +309,8 @@ void OffensiveSideAuton(){
   chassis.set_turn_pid(90, TURN_SPEED);
   chassis.wait_drive();
 
-  IntakeLeft = 0;
-  IntakeRight = 0;
+  autonIntakeLeft = 0;
+  autonIntakeRight = 0;
   chassis.set_drive_pid(12.49, DRIVE_SPEED);
   chassis.wait_drive();
 

@@ -1,45 +1,47 @@
 #include "main.h"
 #include "autons.hpp"
+#include "pros/misc.h"
 using namespace pros;
 
-// 1 AND 14 ARE BAD
+// 1, 2, 11, 15, 18 BAD
 
 // Drive Motors :: Slide Side is the Front
-pros::Motor driveLeftFrontTop(9, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor driveLeftFront(9, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor driveLeftBack(5, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveLeftFrontTop(9, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveLeftFront(9, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveLeftBack(5, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
 
-pros::Motor driveRightFrontTop(12, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor driveRightFront(12, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor driveRightBack(3, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveRightFrontTop(12, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveRightFront(12, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor driveRightBack(3, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
 
 // flywheel Motor
-pros::Motor Fly(2, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor Fly(3, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
 
 // intake motors
 pros::Motor IntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor IntakeLeft(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor IntakeLeft(14, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
 
 // Expansion
 pros::ADIDigitalOut walls('H');
+pros::ADIDigitalOut verticalWalls('G');
 
-// controller=
+// controller
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
-// Gyro
-pros::Imu gyro(17);
+// // Gyro
+// pros::Imu gyro(17);
 
 
 // Chassis constructor
 Drive chassis(
     // Left Chassis Ports (negative port will reverse it!)
     //   the first port is the sensored port (when trackers are not used!)
-    {12, 19, 11}
+    {12, 19, 13}
 
     // Right Chassis Ports (negative port will reverse it!)
     //   the first port is the sensored port (when trackers are not used!)
     ,
-    {9, 6, 10}
+    {9, 6, 7}
 
     // IMU Port (gyro)
     ,
@@ -178,12 +180,9 @@ void autonomous() {
 
 bool intaketoggle = false;
 bool shoottoggle = false;
-bool expanded = false;
-bool expanded2 = false;
-bool expanded3 = false;
-bool windown = true;
-float counter = 0;
-bool inNormal = false;
+bool verticalExpanded = false;
+bool wallsExpanded = false;
+double counter = 0;
 bool flyReverse = false;
 bool intakeallowed = false;
 int power = 125;
@@ -193,6 +192,7 @@ void opcontrol() {
     chassis.set_drive_brake(E_MOTOR_BRAKE_COAST);
     int timer = 0;
     int wallsTimer = 0;
+    int verticalTimer = 0;
     int block = 0;
     int flyR = 0;
     int fly = 0;
@@ -210,10 +210,10 @@ void opcontrol() {
         // Put more user control code here!
         // . . .
 
+        // intake
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             IntakeLeft = 127;
             IntakeRight = 127;
-
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
             IntakeLeft = -127;
             IntakeRight = -127;
@@ -222,28 +222,37 @@ void opcontrol() {
             IntakeRight = 0;
         }
 
+        // walls
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1) && wallsTimer <= timer) {
-            expanded = !expanded;
-            walls.set_value(expanded);
+            wallsExpanded = !wallsExpanded;
+            walls.set_value(wallsExpanded);
             wallsTimer = timer + 10;
         }
 
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && flyR <= timer) {
-            flyReverse = !flyReverse;
-            flyR = timer + 10;
+        // vertical walls
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2) && verticalExpanded <= timer) {
+            verticalExpanded = !verticalExpanded;
+            verticalWalls.set_value(verticalExpanded);
+            verticalTimer = timer + 10;
         }
 
-        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2) && shoottoggle == false && fly <= timer) {
-            power = flyReverse ? -power : power;
-            Fly = -power;
+        // Fly wheel
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && shoottoggle == false && fly <= timer) {
+            Fly = flyReverse ? -power : power;
 
             shoottoggle = true;
             fly = timer + 15;
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2) && shoottoggle == true && fly <= timer) {
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && shoottoggle == true && fly <= timer) {
             Fly = 0;
 
             shoottoggle = false;
             fly = timer + 15;
+        }
+
+        // Reverse flywheel
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X) && flyR <= timer) {
+            flyReverse = !flyReverse;
+            flyR = timer + 10;
         }
 
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP) && pwr <= timer) {
@@ -261,14 +270,9 @@ void opcontrol() {
         }
 
         controller.print(0, 0, "Counter: %d", power);
-        // Reverses Intake
-
-        // Winding the Winch backwards
-
-        // Shooting the winch
-
         timer++;
 
         pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
     }
 }
+

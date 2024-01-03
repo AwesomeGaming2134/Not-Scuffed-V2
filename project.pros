@@ -311,7 +311,7 @@
     },
     "upload_options": {
       "compress_bin": true,
-      "description": "Now introducing EZ-Template",
+      "description": "It's probably scuffed",
       "remote_name": "EZ-Template",
       "slot": 1,
       "icon": "planet"
