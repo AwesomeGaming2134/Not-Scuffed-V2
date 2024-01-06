@@ -1,4 +1,5 @@
 #include "main.h"
+#include "pros/adi.hpp"
 
 
 /////
@@ -21,47 +22,47 @@ const int SWING_SPEED = 90;
 ///
 
 // flywheel Motor
-pros::Motor autonFly(2, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor autonFly(3, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
 
 // intake motors
-pros::Motor autonIntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor autonIntakeLeft(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor autonIntake(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
 
 // Expansion
 pros::ADIDigitalOut autonWalls('H');
+pros::ADIDigitalOut autonDescore('G');
 
 // It's best practice to tune constants when the robot is empty and with heavier game objects, or with lifts up vs down.
 // If the objects are light or the cog doesn't change much, then there isn't a concern here.
 
-void default_constants() {
-  chassis.set_slew_min_power(80, 80);
-  chassis.set_slew_distance(7, 7);
-  chassis.set_pid_constants(&chassis.headingPID, 11, 0, 20, 0); // tune
-  chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 5, 0); // tune
-  chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0); // tune
-  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15); // tune
-  chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0); // tune
-}
-
-void one_mogo_constants() { // leave alone
-  chassis.set_slew_min_power(80, 80);
+void default_constants() { // tune
+  chassis.set_slew_min_power(110, 110);
   chassis.set_slew_distance(7, 7);
   chassis.set_pid_constants(&chassis.headingPID, 11, 0, 20, 0);
-  chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 5, 0);
-  chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0);
-  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
+  chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0.075, 2.75, 10);
+  chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0.075, 2.75, 10);
+  chassis.set_pid_constants(&chassis.turnPID, 5, 0.005, 35, 15);
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
 }
 
-void two_mogo_constants() { // leave alone
-  chassis.set_slew_min_power(80, 80);
-  chassis.set_slew_distance(7, 7);
-  chassis.set_pid_constants(&chassis.headingPID, 11, 0, 20, 0);
-  chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 5, 0);
-  chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0);
-  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
-  chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
-}
+// void one_mogo_constants() { // leave alone
+//   chassis.set_slew_min_power(80, 80);
+//   chassis.set_slew_distance(7, 7);
+//   chassis.set_pid_constants(&chassis.headingPID, 11, 0, 20, 0);
+//   chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 0, 0);
+//   chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 0, 0);
+//   chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
+//   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
+// }
+
+// void two_mogo_constants() { // leave alone
+//   chassis.set_slew_min_power(80, 80);
+//   chassis.set_slew_distance(7, 7);
+//   chassis.set_pid_constants(&chassis.headingPID, 11, 0, 20, 0);
+//   chassis.set_pid_constants(&chassis.forward_drivePID, 0.45, 0, 5, 0);
+//   chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0);
+//   chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
+//   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
+// }
 
 
 void modified_exit_condition() {// leave alone
@@ -79,8 +80,7 @@ void drive_example() {
   // The third parameter is a boolean (true or false) for enabling/disabling a slew at the start of drive motions
   // for slew, only enable it when the drive distance is greater then the slew distance + a few inches
 
-
-  chassis.set_drive_pid(24, DRIVE_SPEED, true);
+  chassis.set_drive_pid(24, DRIVE_SPEED);
   chassis.wait_drive();
 
   chassis.set_drive_pid(-12, DRIVE_SPEED);
@@ -88,6 +88,8 @@ void drive_example() {
 
   chassis.set_drive_pid(-12, DRIVE_SPEED);
   chassis.wait_drive();
+
+  autonIntake = 127;
 }
 
 
@@ -108,6 +110,8 @@ void turn_example() {
 
   chassis.set_turn_pid(0, TURN_SPEED);
   chassis.wait_drive();
+
+  autonFly = 127;
 }
 
 
@@ -130,6 +134,9 @@ void drive_and_turn() {
 
   chassis.set_drive_pid(-24, DRIVE_SPEED, true);
   chassis.wait_drive();
+
+  autonWalls.set_value(true);
+  autonDescore.set_value(true);
 }
 
 
@@ -277,8 +284,7 @@ void OffensiveSideAuton(){
   chassis.set_turn_pid(-45, TURN_SPEED);
   chassis.wait_drive();
 
-  autonIntakeLeft = 127;
-  autonIntakeRight = 127;
+  autonIntake = 127;
   chassis.set_drive_pid(44.82, DRIVE_SPEED);
   chassis.wait_drive();
 
@@ -286,8 +292,7 @@ void OffensiveSideAuton(){
   chassis.wait_drive();
 
   autonWalls.set_value(true);
-  autonIntakeLeft = 0;
-  autonIntakeRight = 0;
+  autonIntake = 0;
   chassis.set_drive_pid(44.27, DRIVE_SPEED);
   chassis.wait_drive();
 
@@ -298,8 +303,7 @@ void OffensiveSideAuton(){
   chassis.set_turn_pid(244, TURN_SPEED);
   chassis.wait_drive();
 
-  autonIntakeLeft = 127;
-  autonIntakeRight = 127;
+  autonIntake = 127;
   chassis.set_drive_pid(39.42, DRIVE_SPEED);
   chassis.wait_drive();
 
@@ -309,8 +313,7 @@ void OffensiveSideAuton(){
   chassis.set_turn_pid(90, TURN_SPEED);
   chassis.wait_drive();
 
-  autonIntakeLeft = 0;
-  autonIntakeRight = 0;
+  autonIntake = 0;
   chassis.set_drive_pid(12.49, DRIVE_SPEED);
   chassis.wait_drive();
 

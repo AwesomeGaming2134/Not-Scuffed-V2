@@ -1,5 +1,6 @@
 #include "main.h"
 #include "autons.hpp"
+#include "pros/adi.hpp"
 #include "pros/misc.h"
 using namespace pros;
 
@@ -18,12 +19,13 @@ using namespace pros;
 pros::Motor Fly(3, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
 
 // intake motors
-pros::Motor IntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
-pros::Motor IntakeLeft(14, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+// pros::Motor IntakeRight(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODER_COUNTS);
+pros::Motor IntakeLeft(10, pros::E_MOTOR_GEARSET_06, false, pros::E_MOTOR_ENCODER_COUNTS);
 
 // Expansion
 pros::ADIDigitalOut walls('H');
 pros::ADIDigitalOut verticalWalls('G');
+pros::ADIDigitalOut lift('A');
 
 // controller
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -36,16 +38,16 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 Drive chassis(
     // Left Chassis Ports (negative port will reverse it!)
     //   the first port is the sensored port (when trackers are not used!)
-    {12, 19, 13}
+    {-16, -19, 14}
 
     // Right Chassis Ports (negative port will reverse it!)
     //   the first port is the sensored port (when trackers are not used!)
     ,
-    {9, 6, 7}
+    {9, 7, -6}
 
     // IMU Port (gyro)
     ,
-    20
+    4
 
     // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
     //    (or tracking wheel diameter)
@@ -62,7 +64,7 @@ Drive chassis(
     // eg. if your drive is 84:36 where the 36t is powered, your RATIO would be 2.333.
     // eg. if your drive is 36:60 where the 60t is powered, your RATIO would be 0.6.
     ,
-    0.8
+    1.25
 
     // Uncomment if using tracking wheels
     /*
@@ -101,16 +103,17 @@ void initialize() {
 
     // Autonomous Selector using LLEMU
     ez::as::auton_selector.add_autons({
-        Auton("Example Drive\n\nDrive forward and come back.", drive_example),
-        Auton("Example Turn\n\nTurn 3 times.", turn_example),
+        // Auton("Defensive Side", DefensiveSideAuton),
+        // Auton("Offensive Side", OffensiveSideAuton),
+        // Auton("Programing Skills", SkillsAuton),
+        
+        // Auton("Example Drive\n\nDrive forward and come back.", drive_example),
+        // Auton("Example Turn\n\nTurn 3 times.", turn_example),
         Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
         Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),
         Auton("Swing Example\n\nSwing, drive, swing.", swing_example),
         Auton("Combine all 3 movements", combining_movements),
         Auton("Interference\n\nAfter driving forward, robot performs differently if interfered or not.", interfered_example),
-        Auton("Defensive Side", DefensiveSideAuton),
-        Auton("Offensive Side", OffensiveSideAuton),
-        Auton("Programing Skills", SkillsAuton),
   });
 
     // Initialize chassis and auton selector
@@ -126,6 +129,8 @@ void initialize() {
 
 void disabled() {
     // . . .
+    walls.set_value(false);
+    verticalWalls.set_value(false);
 }
 
 /**
@@ -182,6 +187,7 @@ bool intaketoggle = false;
 bool shoottoggle = false;
 bool verticalExpanded = false;
 bool wallsExpanded = false;
+bool liftExpanded = false;
 double counter = 0;
 bool flyReverse = false;
 bool intakeallowed = false;
@@ -190,10 +196,11 @@ int power = 125;
 void opcontrol() {
     // This is preference to what you like to drive on.
     chassis.set_drive_brake(E_MOTOR_BRAKE_COAST);
+    chassis.set_active_brake(0);
     int timer = 0;
     int wallsTimer = 0;
     int verticalTimer = 0;
-    int block = 0;
+    int liftTimer = 0;
     int flyR = 0;
     int fly = 0;
     int pwr = 0;
@@ -213,13 +220,10 @@ void opcontrol() {
         // intake
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             IntakeLeft = 127;
-            IntakeRight = 127;
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
             IntakeLeft = -127;
-            IntakeRight = -127;
         } else {
             IntakeLeft = 0;
-            IntakeRight = 0;
         }
 
         // walls
@@ -267,6 +271,12 @@ void opcontrol() {
                 power = (int)power - 2;
             }
             pwr = timer + 5;
+        }
+
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B) && liftTimer <= timer) {
+            liftExpanded = !liftExpanded;
+            lift.set_value(liftExpanded);
+            liftTimer = timer + 10;
         }
 
         controller.print(0, 0, "Counter: %d", power);
