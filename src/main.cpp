@@ -131,6 +131,8 @@ void disabled() {
     // . . .
     walls.set_value(false);
     verticalWalls.set_value(false);
+    IntakeLeft = 0;
+    Fly = 0;
 }
 
 /**

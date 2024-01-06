@@ -1,5 +1,6 @@
 #include "main.h"
 #include "pros/adi.hpp"
+#include "pros/rtos.hpp"
 
 
 /////
@@ -30,6 +31,7 @@ pros::Motor autonIntake(10, pros::E_MOTOR_GEARSET_06, true, pros::E_MOTOR_ENCODE
 // Expansion
 pros::ADIDigitalOut autonWalls('H');
 pros::ADIDigitalOut autonDescore('G');
+pros::ADIDigitalOut autonLift('A');
 
 // It's best practice to tune constants when the robot is empty and with heavier game objects, or with lifts up vs down.
 // If the objects are light or the cog doesn't change much, then there isn't a concern here.
@@ -258,22 +260,56 @@ void interfered_example() {
 // . . .
 
 void DefensiveSideAuton(){
-  chassis.set_drive_pid(32.53, DRIVE_SPEED);
+  autonLift.set_value(true);
+  pros::delay(500);
+  autonLift.set_value(false);
+
+  chassis.set_drive_pid(54, DRIVE_SPEED);
   chassis.wait_drive();
 
-  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.set_turn_pid(-90, TURN_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(32.53, DRIVE_SPEED);
+  chassis.set_drive_pid(15, 127);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(-32.53, DRIVE_SPEED);
+  chassis.set_drive_pid(-14, DRIVE_SPEED);
   chassis.wait_drive();
 
-  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.set_turn_pid(-180, TURN_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(-32.53, DRIVE_SPEED);
+  chassis.set_drive_pid(18, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(-128, TURN_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(32, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(-50, TURN_SPEED);
+  chassis.wait_drive();
+
+  autonDescore.set_value(true);
+
+  chassis.set_drive_pid(-20, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  autonDescore.set_value(false);
+
+  pros::delay(500);
+
+  chassis.set_turn_pid(100, TURN_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(18, DRIVE_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(90, TURN_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(12, DRIVE_SPEED);
   chassis.wait_drive();
 }
 
